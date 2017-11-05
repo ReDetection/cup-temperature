@@ -37,17 +37,20 @@ int getTemp() {
 
 void blink(byte times) {
   for (;times>0;times--) {
-    digitalWrite(9, HIGH);
-    delay(100);
-    digitalWrite(9, LOW);
-    delay(100); 
+    digitalWrite(0, HIGH);
+    digitalWrite(1, HIGH);
+    delay(50);
+    digitalWrite(0, LOW);
+    digitalWrite(1, LOW);
+    delay(150); 
   }
 }
 
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   setupADC();
-  pinMode(9, OUTPUT);
+  pinMode(0, OUTPUT);
+  pinMode(1, OUTPUT);
 
   blink(5);
   wdt_reset(); // сбрасываем
@@ -81,6 +84,9 @@ void loop() {
   sleep_enable();
   sleep_cpu();
 
-  blinkNumber(getTemp());
+  int temperature = getTemp();
+  if (temperature > 40) {
+    blinkNumber(temperature);
+  }
   wdt_reset();
 }
