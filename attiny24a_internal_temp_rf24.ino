@@ -1,3 +1,4 @@
+#include <SevSeg.h>
 #include <avr/wdt.h> 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
@@ -35,24 +36,15 @@ int getTemp() {
   return temperature - 273;
 }
 
-void blink(byte times) {
-  for (;times>0;times--) {
-    digitalWrite(0, HIGH);
-    digitalWrite(1, HIGH);
-    delay(50);
-    digitalWrite(0, LOW);
-    digitalWrite(1, LOW);
-    delay(150); 
-  }
+void setupSevSeg() {
+   DDRA=0b11110111;
 }
 
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   setupADC();
-  pinMode(0, OUTPUT);
-  pinMode(1, OUTPUT);
+  setupSevSeg();
 
-  blink(5);
   wdt_reset(); // сбрасываем
   wdt_enable(WDTO_8S); // разрешаем ватчдог 1 сек
   WDTCSR |= _BV(WDIE); // разрешаем прерывания по ватчдогу. Иначе будет резет.
@@ -60,20 +52,30 @@ void setup() {
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 }
 
+static const byte digitCodeMap[] = {
+  //     GFEDCBA  Segments      7-segment map:
+  B00111111, // 0   "0"          AAA
+  B00000110, // 1   "1"         F   B
+  B01011011, // 2   "2"         F   B
+  B01001111, // 3   "3"          GGG
+  B01100110, // 4   "4"         E   C
+  B01101101, // 5   "5"         E   C
+  B01111101, // 6   "6"          DDD
+  B00000111, // 7   "7"
+  B01111111, // 8   "8"
+  B01101111, // 9   "9"
+};
+
+void blink(char digit) {
+  PORTA = c;
+  delay(100);
+  PORTA = 0;
+}
+
 void blinkNumber(int number) {
-  if (number < 0) {
-    digitalWrite(9, HIGH);
-    delay(1000);
-    digitalWrite(9, LOW);
-    delay(300);
-    number *= -1;
-  }
-  while(number > 0) {
-    byte digit = number % 10;
-    number = number / 10;
-    blink(digit + 1);
-    delay(250);
-  }
+  blink(number / 10);
+  delay(100);
+  blink(number % 10);
 }
 
 ISR (WDT_vect) {
@@ -87,6 +89,9 @@ void loop() {
   int temperature = getTemp();
   if (temperature > 40) {
     blinkNumber(temperature);
+    wdt_enable(WDTO_4S);
+  } else {
+    wdt_enable(WDTO_8S);
   }
   wdt_reset();
 }
