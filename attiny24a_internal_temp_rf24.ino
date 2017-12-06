@@ -1,4 +1,3 @@
-#include <SevSeg.h>
 #include <avr/wdt.h> 
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
@@ -41,33 +40,37 @@ void setupSevSeg() {
 }
 
 void setup() {
-  // initialize digital pin LED_BUILTIN as an output.
-  setupADC();
-  setupSevSeg();
-
   wdt_reset(); // сбрасываем
   wdt_enable(WDTO_8S); // разрешаем ватчдог 1 сек
   WDTCSR |= _BV(WDIE); // разрешаем прерывания по ватчдогу. Иначе будет резет.
   sei(); // разрешаем прерывания
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+
+  setupADC();
+  setupSevSeg();
+  
+  int temperature = getTemp();
+  blinkNumber(temperature);
 }
 
+   byte segmentPins[] = {2, 1, 0, 7, 6, 4, 5, 8};
 static const byte digitCodeMap[] = {
   //     GFEDCBA  Segments      7-segment map:
-  B00111111, // 0   "0"          AAA
-  B00000110, // 1   "1"         F   B
-  B01011011, // 2   "2"         F   B
-  B01001111, // 3   "3"          GGG
-  B01100110, // 4   "4"         E   C
-  B01101101, // 5   "5"         E   C
-  B01111101, // 6   "6"          DDD
+//Bdegf-abc
+  B11010111, // 0   "0"          AAA2
+  B00000011, // 1   "1"         F   B1
+  B11100110, // 2   "2"        4F   B
+  B10100111, // 3   "3"         5GGG
+  B00110011, // 4   "4"         E   C8
+  B10110101, // 5   "5"        6E   C
+  B11110101, // 6   "6"          DDD7
   B00000111, // 7   "7"
-  B01111111, // 8   "8"
-  B01101111, // 9   "9"
+  B11110111, // 8   "8"
+  B10110111, // 9   "9"
 };
 
 void blink(char digit) {
-  PORTA = c;
+  PORTA = digitCodeMap[digit];
   delay(100);
   PORTA = 0;
 }
@@ -85,13 +88,16 @@ ISR (WDT_vect) {
 void loop() {
   sleep_enable();
   sleep_cpu();
+  wdt_reset();
 
   int temperature = getTemp();
   if (temperature > 40) {
     blinkNumber(temperature);
     wdt_enable(WDTO_4S);
+    WDTCSR |= _BV(WDIE);
   } else {
     wdt_enable(WDTO_8S);
+    WDTCSR |= _BV(WDIE);
   }
   wdt_reset();
 }
