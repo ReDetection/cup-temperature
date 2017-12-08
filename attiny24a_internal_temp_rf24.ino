@@ -32,7 +32,8 @@ int getTemp() {
   byte low  = ADCL;
   byte high = ADCH;
   int temperature = (high << 8) | low;  //Result is in kelvin
-  return temperature - 273;
+//  return temperature * 1.21476 - 348.098; //v1 github // use (temperature + temperature / 4 - 348) if not enough program space
+  return temperature * 1.25833 - 343.48; //v2 work githubber // use (temperature + temperature / 5 - 343)
 }
 
 void setupSevSeg() {
