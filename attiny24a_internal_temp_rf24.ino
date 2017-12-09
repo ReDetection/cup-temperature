@@ -31,9 +31,9 @@ int getTemp() {
   while (bit_is_set(ADCSRA, ADSC));  //Wait for conversion to finish
   byte low  = ADCL;
   byte high = ADCH;
-  int temperature = (high << 8) | low;  //Result is in kelvin
-//  return temperature * 1.21476 - 348.098; //v1 github // use (temperature + temperature / 4 - 348) if not enough program space
-  return temperature * 1.25833 - 343.48; //v2 work githubber // use (temperature + temperature / 5 - 343)
+  int t = (high << 8) | low;  //Result is in LSB (see datasheet)
+  return t + t / 5 + t / 67 - 348; //v1 github // t * 1.21476 - 348.098
+//  return t + t / 4 + t / 120 - 343; //v2 work githubber // t * 1.25833 - 343.48
 }
 
 void setupSevSeg() {
